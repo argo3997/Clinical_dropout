@@ -27,7 +27,7 @@
 
 - Source: [PhUSE Scripts Repository](https://github.com/phuse-org/phuse-scripts/tree/master/data/sdtm/cdiscpilot01)
 - Standard: SDTM Version 2
-- 대상 환자 수: 약 250~300명
+- 대상 환자 수: 306명 (등록 254명 + Screen Failure 52명)
 
 > Note: CDISC Pilot 01은 업계 표준 교육 데이터셋으로, 현재 SDTM 구조와 동일한 형식을 따릅니다.
 
@@ -54,14 +54,15 @@ clinical-trial-dropout-prediction/
 ├── requirements.txt
 │
 ├── data/
-│   └── raw/                        # 원본 SDTM .xpt 파일
-│       ├── dm.xpt
-│       ├── ae.xpt
-│       ├── ds.xpt
-│       ├── sv.xpt
-│       ├── vs.xpt
-│       ├── cm.xpt
-│       └── mh.xpt
+│   ├── raw/                        # 원본 SDTM .xpt 파일
+│   │   ├── dm.xpt
+│   │   ├── ae.xpt
+│   │   ├── ds.xpt
+│   │   ├── sv.xpt
+│   │   ├── vs.xpt
+│   │   ├── cm.xpt
+│   │   └── mh.xpt
+│   └── model_dataset.csv           # 전처리 완료된 분석 데이터셋
 │
 ├── notebooks/
 │   ├── 01_EDA.ipynb                # 탐색적 데이터 분석
@@ -86,23 +87,23 @@ clinical-trial-dropout-prediction/
 
 ### 2. 전처리 및 피처 엔지니어링
 - SDTM 도메인 간 USUBJID 기준 병합
-- 도메인 지식 기반 파생 변수 생성:
-  - 이상반응 횟수 / 심각한 이상반응(SAE) 경험 여부
-  - 평균 방문 지연일 / 누락 방문 횟수
-  - 병용약물 수 / 기저질환 수
-  - 활력징후 변화량 (baseline 대비)
-- 결측치 처리 및 범주형 변수 인코딩
+- 도메인 지식 기반 파생 변수 33개 생성:
+  - **AE**: 총 건수, SAE 여부, 심각도별 건수, 약물 관련 AE, 미회복 AE, 피부 AE
+  - **VS**: Baseline 활력징후(SYSBP, DIABP, PULSE, TEMP, WEIGHT), 혈압/맥박 변동성(STD)
+  - **CM**: 병용약물 수, 고유 약물 수, 약물 분류 수
+  - **MH**: 기저질환 수, 기존 질환 수, Body System 다양성, 고혈압 병력
+- Data Leakage 검토: 방문 관련 피처(탈락의 "결과")를 식별하여 모델링에서 제거
+- 결측치 처리(중앙값 대체) 및 범주형 변수 인코딩
 
 ### 3. 모델링
-- Logistic Regression, Random Forest, Gradient Boosting 등 다중 모델 비교
-- 불균형 데이터 처리 (SMOTE 등)
-- 교차검증 및 하이퍼파라미터 튜닝
+- Logistic Regression, Random Forest, Gradient Boosting 3개 모델 비교
+- 5-Fold Stratified Cross-Validation
+- GridSearchCV를 활용한 하이퍼파라미터 튜닝
 - 평가 지표: AUC-ROC, Precision, Recall, F1-Score
 
 ### 4. 모델 해석 및 비즈니스 제언
-- SHAP을 활용한 피처 중요도 분석
-- 탈락 고위험 요인 도출
-- 실무 적용 가능한 개선 방안 제시
+- Feature Importance 기반 주요 탈락 요인 도출
+- 실무 적용 가능한 개선 방안 3가지 제시
 
 ---
 
@@ -137,7 +138,53 @@ jupyter notebook
 
 ## 📊 주요 결과
 
-> 🚧 분석 진행 중 — 결과는 분석 완료 후 업데이트 예정
+### 데이터 요약
+
+- 분석 대상: **254명** (Screen Failure 52명 제외)
+- 투약군: Placebo(86), Xanomeline Low Dose(84), Xanomeline High Dose(84)
+- **전체 탈락률: 56.7%** (144/254)
+- 탈락 사유 1위: Adverse Event — 92건 (63.9%)
+
+### 탈락률 by 투약군
+
+| 투약군 | 탈락률 | 완료 | 탈락 |
+|--------|--------|------|------|
+| Placebo | 32.6% | 58 | 28 |
+| Xanomeline Low Dose | 70.2% | 25 | 59 |
+| Xanomeline High Dose | 67.9% | 27 | 57 |
+
+### 피처 엔지니어링
+
+7개 SDTM 도메인에서 **33개 파생 피처**를 생성했으며, Data Leakage 검토를 통해 방문 관련 피처(VISIT_TOTAL, VISIT_SCHEDULED, MAX_WEEK 등)를 제거하여 최종 **28개 피처**로 모델링을 수행했습니다.
+
+### 모델 성능
+
+| 모델 | CV AUC (5-Fold) | Test AUC |
+|------|-----------------|----------|
+| Logistic Regression | 0.733 | 0.627 |
+| Random Forest | 0.728 | 0.630 |
+| **Gradient Boosting** | **0.758** | 0.614 |
+
+> Data Leakage 제거 전 방문 피처 포함 시 상관관계 r > 0.85로 모델 성능이 과대 추정됩니다. 이를 인지하고 제거한 후의 결과이며, 254명의 소규모 데이터 한계를 고려하면 합리적인 수준입니다.
+
+### Top Feature Importance
+
+1. **ARM_PLACEBO** — 투약군 여부가 탈락의 가장 강력한 예측 변수
+2. **VS_BL_SYSBP** — 기저 수축기혈압
+3. **VS_BL_PULSE** — 기저 맥박
+4. **VS_BL_DIABP** — 기저 이완기혈압
+5. **AE_MILD / AE_MODERATE** — 이상반응 심각도 패턴
+
+### 비즈니스 제언
+
+1. **투약군 환자 대상 강화 모니터링** — 특히 피부 관련 부작용 발생 시 즉각 대응 프로토콜 도입
+2. **Baseline 활력징후 기반 위험 계층화** — 혈압/맥박 불안정 환자에게 사전 관리 강화
+3. **AE 심각도 기반 조기 경고 시스템** — MODERATE 이상 AE 발생 시 자동 알림 + 추가 방문 스케줄링
+
+### 한계점
+
+- 소규모 데이터(254명)로 인한 일반화 한계
+- 시간적 요소 미반영 — 향후 초기 2~4주 데이터만으로 예측하는 시계열 접근 고려 필요
 
 ---
 
@@ -151,6 +198,4 @@ jupyter notebook
 
 ## 👤 Author
 
-- GitHub: (https://github.com/argo3997/Clinical_dropout)
-
-
+- GitHub: https://github.com/argo3997
