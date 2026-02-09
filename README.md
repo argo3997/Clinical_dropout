@@ -151,4 +151,6 @@ jupyter notebook
 
 ## 👤 Author
 
-- GitHub: [@your-username](https://github.com/your-username)
+- GitHub: (https://github.com/argo3997/Clinical_dropout)
+
+
