@@ -1,0 +1,7 @@
+MODEL,METRIC_TYPE,VALUE
+Logistic Regression,CV AUC,0.733
+Random Forest,CV AUC,0.728
+Gradient Boosting,CV AUC,0.758
+Logistic Regression,Test AUC,0.627
+Random Forest,Test AUC,0.63
+Gradient Boosting,Test AUC,0.614

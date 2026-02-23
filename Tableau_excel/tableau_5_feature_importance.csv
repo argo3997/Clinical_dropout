@@ -1,0 +1,16 @@
+RANK,FEATURE,IMPORTANCE,CATEGORY,PRACTICAL_SIGNIFICANCE,INTERPRETATION
+1,ARM_PLACEBO,0.11,Treatment,High,Placebo군 탈락률 32.6% vs 투약군 ~70%. 약물 부작용이 탈락의 주원인
+2,VS_BL_SYSBP,0.0763,Vital Signs,Low,소규모 데이터에서 트리 모델이 노이즈를 학습한 결과. 실질적 의미 약함
+3,VS_BL_PULSE,0.069,Vital Signs,Low,소규모 데이터에서 트리 모델이 노이즈를 학습한 결과. 실질적 의미 약함
+4,VS_BL_DIABP,0.0686,Vital Signs,Low,소규모 데이터에서 트리 모델이 노이즈를 학습한 결과. 실질적 의미 약함
+5,VS_PULSE_STD,0.058,Vital Signs,Low,소규모 데이터에서 트리 모델이 노이즈를 학습한 결과. 실질적 의미 약함
+6,AE_MILD,0.0575,Adverse Events,Medium,경미한 AE가 많을수록 오히려 완료. 가벼운 부작용은 참고 참여 지속
+7,VS_BL_WEIGHT,0.0536,Vital Signs,Low,소규모 데이터에서 트리 모델이 노이즈를 학습한 결과. 실질적 의미 약함
+8,VS_BL_TEMP,0.0482,Vital Signs,Low,소규모 데이터에서 트리 모델이 노이즈를 학습한 결과. 실질적 의미 약함
+9,VS_SYSBP_STD,0.0457,Vital Signs,Low,소규모 데이터에서 트리 모델이 노이즈를 학습한 결과. 실질적 의미 약함
+10,AE_MODERATE,0.0453,Adverse Events,Medium,중등도 AE가 많을수록 탈락 증가. 환자가 부작용을 견디지 못해 중단
+11,AGE,0.0439,Demographics,Low,"전체적으로 고령 환자(평균 75세)이며, 나이 자체의 영향은 제한적"
+12,MH_COUNT,0.0355,Medical History,Low,기저질환 수. 복잡한 환자일수록 탈락 위험 다소 증가
+13,AE_COUNT,0.0325,Adverse Events,Medium,총 AE 건수. 부작용이 많을수록 탈락과 관련
+14,MH_PREEXIST,0.0299,Medical History,Low,기존 질환 수. MH_COUNT와 유사한 의미
+15,MH_BODSYS_N,0.0276,Medical History,Low,기저질환 Body System 다양성
